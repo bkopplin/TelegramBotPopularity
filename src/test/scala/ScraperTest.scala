@@ -1,23 +1,53 @@
-import Scraper.{getTelegramBots, scrapeGithub}
+import org.jsoup.Jsoup
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers.shouldBe
 
-class ScraperTest extends AnyFunSpec {
+import java.io.File
+import scala.language.postfixOps
+
+class ScraperTest extends AnyFunSpec, MockFactory {
   describe("getMostPopularTelegramBot") {
     it("should get a list Telegram bots") {
-      val bots = getTelegramBots
-      println(bots)
+      val scraper = Scraper(new JsoupWrapper)
+      val bots = scraper.getTelegramBots
+      assert(bots.lengthIs > 80)
     }
   }
 
   describe("scrapeGithub") {
-    it("should scrape a github page") {
-      val result = scrapeGithub("https://github.com/grammyjs/grammY")
-      println(result)
-    }
+    it("should correctly extract information from a github page") {
+      val url = "https://github.com/pengrad/java-telegram-bot-api"
 
-    it("should scrape a github page that doesn't have usedBy") {
-      val result = scrapeGithub("https://github.com/klappvisor/haskell-telegram-api")
-      println(result)
+      val expectedResult = GithubScrapeResult(
+        title = Some("java-telegram-bot-api"),
+        url = url,
+        language = Some("Java"),
+        usedBy = Some(3533),
+        stars = Some(1805),
+        contributors = Some(20)
+      )
+
+      val jsoupMock = mock[JsoupWrapper]
+      jsoupMock.get
+        .expects(url)
+        .returning(
+          Jsoup.parse(
+            new File(
+              "src/test/resources/github-pengrad-java-telegram-bot-api.html"
+            )
+          )
+        )
+        .once()
+
+      val scraper = Scraper(jsoupMock)
+
+      val result =
+        scraper.scrapeGithub(
+          url
+        )
+
+      result shouldBe expectedResult
     }
   }
 }
