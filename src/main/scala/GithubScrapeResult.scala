@@ -1,5 +1,5 @@
 import GithubScrapeResult.CSV_SEPERATOR
-import Util.{EMPTY_STRING, NEWLINE, SEMICOLON}
+import Util.{COMMA, EMPTY_STRING, NEWLINE}
 
 final case class GithubScrapeResult(
     title: Option[String],
@@ -14,17 +14,17 @@ final case class GithubScrapeResult(
 
   def toCsv: String =
     Seq(
-      title,
+      title.getOrElse(EMPTY_STRING),
       url,
       language.getOrElse(EMPTY_STRING),
       stars.getOrElse(EMPTY_STRING),
       usedBy.getOrElse(EMPTY_STRING),
       contributors.getOrElse(EMPTY_STRING)
-    ).mkString(CSV_SEPERATOR.toString).appended(CSV_SEPERATOR).appended(NEWLINE)
+    ).mkString(CSV_SEPERATOR.toString).appended(NEWLINE)
 }
 
 object GithubScrapeResult:
-  val CSV_SEPERATOR: Char = SEMICOLON
+  val CSV_SEPERATOR: Char = COMMA
   private val CSV_HEADERS: Seq[String] =
     Seq("title", "url", "language", "stars", "usedBy", "contributors")
 
@@ -33,7 +33,6 @@ object GithubScrapeResult:
       path,
       CSV_HEADERS
         .mkString(CSV_SEPERATOR.toString)
-        .appended(CSV_SEPERATOR)
         .appended(NEWLINE)
     )
     data.foreach(d => os.write.append(path, d.toCsv))
